@@ -1,0 +1,17 @@
+{
+  "1": {
+    "name": "Dr. abyu",
+    "email": "admin@ceritajiwa.com",
+    "phone": "+62 812-3456-7890",
+    "role": "Super Admin",
+    "joinDate": "June 2023",
+    "department": "Mental Health Administration",
+    "profileImage": null,
+    "wellnessSettings": {
+      "maxContentPerSession": 15,
+      "breakReminderInterval": 2,
+      "wellnessScore": 85
+    },
+    "updatedAt": "2026-01-23T02:59:46.780Z"
+  }
+}

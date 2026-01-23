@@ -1,0 +1,14 @@
+[
+  {
+    "id": "1769136611831",
+    "userId": "3",
+    "category": "bug_sistem",
+    "description": "Test report from API",
+    "status": "diproses",
+    "priority": "rendah",
+    "createdAt": "2026-01-23T02:50:11.831Z",
+    "updatedAt": "2026-01-23T03:31:02.904Z",
+    "replies": [],
+    "escalated": false
+  }
+]
