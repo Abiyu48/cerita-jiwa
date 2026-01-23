@@ -24,6 +24,7 @@ import ReportHistory from './pages/reports/ReportHistory';
 import SupportDashboard from './pages/support/SupportDashboard';
 import HandleReport from './pages/support/HandleReport';
 import SupportProfile from './pages/support/SupportProfile';
+import UserReports from './pages/support/UserReports';
 import AdminReportDashboard from './pages/admin/AdminReportDashboard';
 import AdminReportDecision from './pages/admin/AdminReportDecision';
 
@@ -192,6 +193,7 @@ function App() {
             <Route path="/support" element={<Navigate to="/support/dashboard" replace />} />
 
             {/* User Report Routes (No Sidebar) */}
+            <Route path="/reports" element={<Navigate to="/reports/create" replace />} />
             <Route path="/reports/create" element={
               <ProtectedRoute allowedRoles={['user']}>
                 <CreateReport />
@@ -200,6 +202,13 @@ function App() {
             <Route path="/reports/history" element={
               <ProtectedRoute allowedRoles={['user']}>
                 <ReportHistory />
+              </ProtectedRoute>
+            } />
+
+            {/* Customer Support User Report Page */}
+            <Route path="/support/user-reports" element={
+              <ProtectedRoute allowedRoles={['support']}>
+                <UserReports />
               </ProtectedRoute>
             } />
 

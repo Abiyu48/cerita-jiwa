@@ -25,5 +25,32 @@
     "actorRole": "support",
     "details": "Status changed to diproses",
     "timestamp": "2026-01-23T03:31:02.906Z"
+  },
+  {
+    "id": "1769149992994",
+    "reportId": "1769149966440",
+    "action": "reply",
+    "actorId": 2,
+    "actorRole": "support",
+    "details": "Added reply to report",
+    "timestamp": "2026-01-23T06:33:12.994Z"
+  },
+  {
+    "id": "1769150401226",
+    "reportId": "1769150379260",
+    "action": "status_update",
+    "actorId": 2,
+    "actorRole": "support",
+    "details": "Status changed to diproses",
+    "timestamp": "2026-01-23T06:40:01.226Z"
+  },
+  {
+    "id": "1769150407276",
+    "reportId": "1769150379260",
+    "action": "reply",
+    "actorId": 2,
+    "actorRole": "support",
+    "details": "Added reply to report",
+    "timestamp": "2026-01-23T06:40:07.276Z"
   }
 ]

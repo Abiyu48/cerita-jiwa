@@ -1,22 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../../context/AuthContext';
-import Card from '../../components/ui/Card';
-import Button from '../../components/ui/Button';
-import {
-  MessageCircle,
-  Plus,
-  Filter,
-  Trash2,
-  Send,
-  Heart,
-  Smile,
-  Meh,
-  Frown,
-  Angry,
-} from 'lucide-react';
+import { MessageCircle, Plus, Filter, Trash2, Send, Heart, Smile, Meh, Frown, Angry } from 'lucide-react';
 
 const AIChat = () => {
-  const { user } = useAuth();
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
@@ -24,7 +9,6 @@ const AIChat = () => {
   const [filter, setFilter] = useState('Semua');
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
-
   const [chatHistory, setChatHistory] = useState([]);
 
   const emotionFilters = [
@@ -44,15 +28,12 @@ const AIChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  // Detect emotion from message
   const detectEmotion = (message) => {
     const msg = message.toLowerCase();
-    
     if (msg.includes('sedih') || msg.includes('putus') || msg.includes('sakit hati')) return '😔';
     if (msg.includes('marah') || msg.includes('kesal') || msg.includes('emosi')) return '😠';
     if (msg.includes('khawatir') || msg.includes('takut') || msg.includes('cemas')) return '😢';
     if (msg.includes('bahagia') || msg.includes('senang') || msg.includes('gembira')) return '😊';
-    
     return '😐';
   };
 
@@ -70,26 +51,22 @@ const AIChat = () => {
 
     setChatHistory([newRoom, ...chatHistory]);
     setSelectedRoom(newRoom.id);
-    setMessages([
-      {
-        id: 1,
-        text: 'Hai! Aku Jiwamu. Aku di sini untuk mendengarkan curhatanmu. Ceritakan apa yang sedang kamu rasakan, aku siap mendengar tanpa menghakimi. 💙',
-        sender: 'ai',
-        timestamp: new Date()
-      }
-    ]);
+    setMessages([{
+      id: 1,
+      text: 'Hai! Aku Jiwamu. Aku di sini untuk mendengarkan curhatanmu. Ceritakan apa yang sedang kamu rasakan, aku siap mendengar tanpa menghakimi. 💙',
+      sender: 'ai',
+      timestamp: new Date()
+    }]);
   };
 
   const selectRoom = (room) => {
     setSelectedRoom(room.id);
-    setMessages(room.messages || [
-      {
-        id: 1,
-        text: 'Hai! Aku Jiwamu. Aku di sini untuk mendengarkan curhatanmu. Ceritakan apa yang sedang kamu rasakan, aku siap mendengar tanpa menghakimi. 💙',
-        sender: 'ai',
-        timestamp: new Date()
-      }
-    ]);
+    setMessages(room.messages || [{
+      id: 1,
+      text: 'Hai! Aku Jiwamu. Aku di sini untuk mendengarkan curhatanmu. Ceritakan apa yang sedang kamu rasakan, aku siap mendengar tanpa menghakimi. 💙',
+      sender: 'ai',
+      timestamp: new Date()
+    }]);
   };
 
   const updateChatHistory = (roomId, newMessages, lastUserMessage) => {
@@ -127,12 +104,9 @@ const AIChat = () => {
     setError(null);
 
     try {
-      // Call backend API
       const response = await fetch('http://localhost:3001/api/ai-chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: currentMessage,
           conversationHistory: messages.slice(-10).map(msg => ({
@@ -142,10 +116,7 @@ const AIChat = () => {
         })
       });
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
 
       const aiResponse = {
@@ -158,12 +129,10 @@ const AIChat = () => {
       const finalMessages = [...updatedMessages, aiResponse];
       setMessages(finalMessages);
       updateChatHistory(selectedRoom, finalMessages, currentMessage);
-
     } catch (error) {
       console.error('Error getting AI response:', error);
       setError('Gagal terhubung ke server. Pastikan server berjalan di http://localhost:3001');
       
-      // Fallback response
       const aiResponse = {
         id: Date.now() + 1,
         text: 'Maaf, saya mengalami kesulitan teknis. Silakan coba lagi atau pastikan server sudah berjalan. 🙏',
@@ -193,19 +162,18 @@ const AIChat = () => {
   });
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <div className="min-h-screen relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-sky-50">
       {/* Soft Background Blobs */}
-      <div className="fixed inset-0 -z-10">
-        <div className="blob w-96 h-96 bg-emerald-200 top-20 -left-20 animate-float-soft"></div>
-        <div className="blob w-80 h-80 bg-sky-200 top-1/3 -right-32 animate-float-soft-reverse"></div>
-        <div className="blob w-72 h-72 bg-emerald-300 bottom-32 left-1/4 animate-float-soft-delayed"></div>
-        <div className="blob w-64 h-64 bg-sky-300 bottom-1/3 right-1/4 animate-float-soft"></div>
+      <div className="fixed inset-0 -z-10 overflow-hidden">
+        <div className="absolute w-96 h-96 bg-emerald-200/30 rounded-full blur-3xl top-20 -left-20 animate-pulse"></div>
+        <div className="absolute w-80 h-80 bg-sky-200/30 rounded-full blur-3xl top-1/3 -right-32 animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute w-72 h-72 bg-emerald-300/20 rounded-full blur-3xl bottom-32 left-1/4 animate-pulse" style={{animationDelay: '2s'}}></div>
       </div>
 
       <div className="px-6 pt-32 pb-20">
         {/* Header */}
         <div className="max-w-7xl mx-auto mb-8">
-          <div className="text-center slide-up">
+          <div className="text-center">
             <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-4">
               AI <span className="text-emerald-500">Companion</span>
             </h1>
@@ -224,18 +192,18 @@ const AIChat = () => {
           {/* Chat History Sidebar */}
           <div className="lg:col-span-1 space-y-6">
             {/* Create New Room */}
-            <Card className="p-6 slide-up border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300 rounded-3xl">
-              <Button
+            <div className="p-6 bg-white/70 backdrop-blur-xl rounded-3xl border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
+              <button
                 onClick={createNewRoom}
-                className="w-full bg-gradient-to-r from-emerald-400 to-sky-500 hover:from-emerald-500 hover:to-sky-600 text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
+                className="w-full bg-gradient-to-r from-emerald-400 to-sky-500 hover:from-emerald-500 hover:to-sky-600 text-white py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Buat Ruangan Baru
-              </Button>
-            </Card>
+              </button>
+            </div>
 
             {/* Filter */}
-            <Card className="p-6 slide-up border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300 rounded-3xl">
+            <div className="p-6 bg-white/70 backdrop-blur-xl rounded-3xl border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-center space-x-2 mb-4">
                 <Filter className="w-5 h-5 text-gray-600" />
                 <h3 className="font-semibold text-gray-800">Filter Perasaan</h3>
@@ -260,10 +228,10 @@ const AIChat = () => {
                   </button>
                 ))}
               </div>
-            </Card>
+            </div>
 
             {/* Chat History */}
-            <Card className="p-6 slide-up border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300 rounded-3xl">
+            <div className="p-6 bg-white/70 backdrop-blur-xl rounded-3xl border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-gray-800">Riwayat Curhat</h3>
                 {chatHistory.length > 0 && (
@@ -298,11 +266,6 @@ const AIChat = () => {
                         <h4 className="font-medium text-gray-800 text-sm line-clamp-2 flex-1">
                           {room.lastMessage}
                         </h4>
-                        {room.unread > 0 && (
-                          <span className="bg-emerald-500 text-white text-xs px-2 py-1 rounded-full ml-2">
-                            {room.unread}
-                          </span>
-                        )}
                       </div>
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <span>{room.emotion}</span>
@@ -312,13 +275,13 @@ const AIChat = () => {
                   ))}
                 </div>
               )}
-            </Card>
+            </div>
           </div>
 
           {/* Chat Interface */}
           <div className="lg:col-span-2">
             {selectedRoom ? (
-              <Card className="h-[600px] flex flex-col slide-up border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300 rounded-3xl">
+              <div className="h-[600px] flex flex-col bg-white/70 backdrop-blur-xl rounded-3xl border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
                 {/* Chat Header */}
                 <div className="p-6 border-b border-gray-100">
                   <div className="flex items-center space-x-3">
@@ -370,7 +333,6 @@ const AIChat = () => {
                       </div>
                     </div>
                   )}
-
                   <div ref={messagesEndRef} />
                 </div>
 
@@ -386,18 +348,18 @@ const AIChat = () => {
                       className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent"
                       disabled={isTyping}
                     />
-                    <Button
+                    <button
                       onClick={sendMessage}
                       disabled={!newMessage.trim() || isTyping}
                       className="px-6 py-3 bg-gradient-to-r from-emerald-400 to-sky-500 hover:from-emerald-500 hover:to-sky-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       <Send className="w-5 h-5" />
-                    </Button>
+                    </button>
                   </div>
                 </div>
-              </Card>
+              </div>
             ) : (
-              <Card className="h-[600px] flex items-center justify-center slide-up border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300 rounded-3xl">
+              <div className="h-[600px] flex items-center justify-center bg-white/70 backdrop-blur-xl rounded-3xl border-2 border-emerald-200/60 shadow-lg hover:shadow-xl transition-all duration-300">
                 <div className="text-center">
                   <div className="w-24 h-24 bg-gradient-to-r from-emerald-400 to-sky-500 rounded-full flex items-center justify-center mx-auto mb-6">
                     <MessageCircle className="w-12 h-12 text-white" />
@@ -406,14 +368,14 @@ const AIChat = () => {
                   <p className="text-gray-600 mb-6 max-w-md">
                     Ruang aman untuk berbagi perasaan dengan AI yang selalu siap mendengarkan tanpa menghakimi
                   </p>
-                  <Button
+                  <button
                     onClick={createNewRoom}
                     className="bg-gradient-to-r from-emerald-400 to-sky-500 hover:from-emerald-500 hover:to-sky-600 text-white px-8 py-4 rounded-2xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300"
                   >
                     Mulai Curhat
-                  </Button>
+                  </button>
                 </div>
-              </Card>
+              </div>
             )}
           </div>
         </div>

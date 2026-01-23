@@ -10,5 +10,47 @@
     "updatedAt": "2026-01-23T03:31:02.904Z",
     "replies": [],
     "escalated": false
+  },
+  {
+    "id": "1769149966440",
+    "userId": 1769077108678,
+    "category": "masalah_akun",
+    "description": "akun saya bermasalah",
+    "status": "baru",
+    "priority": "rendah",
+    "createdAt": "2026-01-23T06:32:46.440Z",
+    "updatedAt": "2026-01-23T06:33:12.993Z",
+    "replies": [
+      {
+        "id": "1769149992993",
+        "message": "halo kira kira bermasalah kenapa ya kak?",
+        "authorId": 2,
+        "authorName": "Customer Support",
+        "authorRole": "support",
+        "timestamp": "2026-01-23T06:33:12.993Z"
+      }
+    ],
+    "escalated": false
+  },
+  {
+    "id": "1769150379260",
+    "userId": 1769077108678,
+    "category": "konten_sensitif",
+    "description": "yah",
+    "status": "diproses",
+    "priority": "rendah",
+    "createdAt": "2026-01-23T06:39:39.260Z",
+    "updatedAt": "2026-01-23T06:40:07.274Z",
+    "replies": [
+      {
+        "id": "1769150407274",
+        "message": "oke kak",
+        "authorId": 2,
+        "authorName": "Customer Support",
+        "authorRole": "support",
+        "timestamp": "2026-01-23T06:40:07.274Z"
+      }
+    ],
+    "escalated": false
   }
 ]

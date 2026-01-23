@@ -19,6 +19,9 @@ const SupportDashboard = () => {
 
   useEffect(() => {
     fetchReports();
+    // Auto refresh every 30 seconds
+    const interval = setInterval(fetchReports, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   const fetchReports = async () => {
@@ -28,7 +31,9 @@ const SupportDashboard = () => {
         throw new Error('Gagal memuat laporan');
       }
       const data = await response.json();
-      setReports(data);
+      // Sort by newest first
+      const sortedReports = data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      setReports(sortedReports);
 
       // Calculate stats
       const stats = data.reduce((acc, report) => {
@@ -103,9 +108,14 @@ const SupportDashboard = () => {
               "Menjadi support berarti hadir dengan empati."
             </p>
           </div>
-          <Button onClick={() => navigate('/support/profile')} variant="secondary">
-            Profil Saya
-          </Button>
+          <div className="flex space-x-3">
+            <Button onClick={() => navigate('/support/user-reports')} variant="secondary">
+              Laporan Pengguna
+            </Button>
+            <Button onClick={() => navigate('/support/profile')} variant="secondary">
+              Profil Saya
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -137,9 +147,19 @@ const SupportDashboard = () => {
 
         {/* Reports Table */}
         <Card className="p-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Laporan Terbaru
-          </h2>
+          <div className="flex justify-between items-center mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">
+              Laporan Terbaru
+            </h2>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={fetchReports}
+              disabled={loading}
+            >
+              {loading ? 'Memuat...' : 'Refresh'}
+            </Button>
+          </div>
 
           {reports.length === 0 ? (
             <div className="text-center py-8">

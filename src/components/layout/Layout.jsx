@@ -15,7 +15,8 @@ import {
   Users,
   BarChart3,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  AlertCircle
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -56,6 +57,7 @@ const Layout = ({ children }) => {
       { name: 'Jurnal', href: '/journal', icon: BookOpen },
       { name: 'Relaksasi', href: '/relaxation', icon: Music },
       { name: 'AI Chat', href: '/ai-chat', icon: MessageCircle },
+      { name: 'Laporan', href: '/reports', icon: AlertCircle },
       { name: 'Edukasi', href: '/education', icon: GraduationCap },
       { name: 'Profil', href: '/profile', icon: User },
     ];
@@ -124,7 +126,7 @@ const Layout = ({ children }) => {
                 {isCollapsed ? <ChevronRight className="w-5 h-5 text-gray-500" /> : <ChevronLeft className="w-5 h-5 text-gray-500" />}
               </button>
             </div>
-            <nav className="flex-1 px-3 py-6 space-y-2">
+            <nav className="flex-1 px-3 py-6 space-y-2 overflow-y-auto">
               {navigation.map((item) => (
                 <a
                   key={item.name}

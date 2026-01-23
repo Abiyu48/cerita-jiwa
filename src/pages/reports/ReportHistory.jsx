@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import Button from '../../components/ui/Button';
 import Card from '../../components/ui/Card';
+import { Star } from 'lucide-react';
 
 const ReportHistory = () => {
   const { user } = useAuth();
@@ -22,8 +23,10 @@ const ReportHistory = () => {
         throw new Error('Gagal memuat riwayat laporan');
       }
       const data = await response.json();
+      // Filter to ensure only current user's reports are shown (double check)
+      const userReports = data.filter(report => report.userId === user.id);
       // Sort by newest first
-      setReports(data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+      setReports(userReports.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
     } catch (err) {
       setError(err.message);
     } finally {
@@ -57,6 +60,15 @@ const ReportHistory = () => {
       ketidaknyamanan_layanan: 'Ketidaknyamanan Layanan'
     };
     return categories[category] || category;
+  };
+
+  const renderStars = (rating) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <Star
+        key={i}
+        className={`w-4 h-4 ${i < rating ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+      />
+    ));
   };
 
   if (loading) {
@@ -158,7 +170,24 @@ const ReportHistory = () => {
                             })}
                           </span>
                         </div>
-                        <p className="text-blue-800 whitespace-pre-wrap">{reply.message}</p>
+                        <p className="text-blue-800 whitespace-pre-wrap mb-3">{reply.message}</p>
+
+                        {/* Rating/Review Section */}
+                        {report.status === 'selesai' && (
+                          <div className="border-t border-blue-200 pt-3">
+                            <div className="flex items-center space-x-2 mb-2">
+                              <span className="text-sm font-medium text-blue-700">Penilaian Layanan:</span>
+                              <div className="flex items-center space-x-1">
+                                {renderStars(reply.rating || 5)}
+                              </div>
+                            </div>
+                            {reply.review && (
+                              <div className="bg-white rounded-lg p-3 border border-blue-200">
+                                <p className="text-sm text-blue-600 italic">"{reply.review}"</p>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

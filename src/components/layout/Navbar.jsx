@@ -9,7 +9,8 @@ import {
   BookOpen,
   MessageCircle,
   Lightbulb,
-  Headphones
+  Headphones,
+  AlertCircle
 } from 'lucide-react';
 
 const Navbar = () => {
@@ -35,6 +36,12 @@ const Navbar = () => {
       title: "Talk Room AI",
       description: "Curhat dengan AI empati",
       link: "/ai-chat"
+    },
+    {
+      icon: AlertCircle,
+      title: "Pusat Bantuan",
+      description: "Laporkan masalah & chat CS",
+      link: "/reports"
     },
     {
       icon: Lightbulb,

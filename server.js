@@ -1,7 +1,10 @@
 import express from 'express';
 import cors from 'cors';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 
@@ -12,8 +15,8 @@ const port = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 
-// Initialize Gemini AI
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+// Inisialisasi Client Baru
+const client = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_PROMPT = `Kamu adalah Jiwamu, AI companion untuk kesehatan mental yang empati dan mendukung. Kamu harus:
 
@@ -25,6 +28,7 @@ const SYSTEM_PROMPT = `Kamu adalah Jiwamu, AI companion untuk kesehatan mental y
 6. Menggunakan emoji yang tepat untuk menunjukkan empati
 7. Menjaga kerahasiaan dan keamanan percakapan
 8. Jika user mengalami krisis mental berat, sarankan untuk mencari bantuan profesional
+9. Jika user mengeluh tentang bug sistem, masalah teknis, atau keluhan layanan, arahkan mereka ke halaman laporan pengguna dengan mengatakan: "Masalah ini bisa kamu laporkan secara langsung agar cepat ditangani. Aku akan membukakan halaman laporan pengguna, dan laporanmu akan diterima langsung oleh Customer Support." Kemudian tambahkan kode [REDIRECT_TO_REPORT] di akhir respons untuk memicu redirect otomatis.
 
 Topik yang sering dibahas:
 - Putus cinta dan sakit hati
@@ -36,70 +40,80 @@ Topik yang sering dibahas:
 - Masalah pekerjaan
 - Masalah kepercayaan diri
 
-Selalu mulai dengan mengakui perasaan mereka dan berikan dukungan sebelum memberikan saran.`;
+Selalu mulai dengan mengakui perasaan mereka dan berikan dukungan sebelum memberikan saran..`;
 
 app.post('/api/ai-chat', async (req, res) => {
   try {
     const { message, conversationHistory } = req.body;
 
-    if (!message) {
-      return res.status(400).json({ error: 'Message is required' });
-    }
-
-    // Get the generative model
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
-
-    // Prepare conversation context
-    let conversationContext = SYSTEM_PROMPT + '\n\n';
-
-    if (conversationHistory && conversationHistory.length > 0) {
-      conversationContext += 'Riwayat percakapan sebelumnya:\n';
-      conversationHistory.slice(-5).forEach(msg => {
-        const role = msg.role === 'user' ? 'User' : 'Jiwamu';
-        conversationContext += `${role}: ${msg.content}\n`;
+    console.log("\n--- [DEBUG: REQUEST MASUK] ---");
+    
+    // 1. Membangun array contents
+    const contents = [];
+    
+    // Tambahkan history jika ada
+    if (conversationHistory && Array.isArray(conversationHistory)) {
+      conversationHistory.forEach(msg => {
+        if (msg.content) {
+          contents.push({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.content }]
+          });
+        }
       });
-      conversationContext += '\n';
     }
 
-    conversationContext += `User: ${message}\n\nJiwamu:`;
+    // Tambahkan pesan user saat ini dengan System Prompt
+    contents.push({
+      role: 'user',
+      parts: [{ text: `${SYSTEM_PROMPT}\n\nUser: ${message}` }]
+    });
 
-    // Generate response
-    const result = await model.generateContent(conversationContext);
-    const response = await result.response;
-    const aiResponse = response.text();
+    console.log("Mengirim ke Model: gemini-3-flash-preview");
 
-    // Clean up response (remove any unwanted formatting)
-    const cleanResponse = aiResponse
-      .replace(/^\s*Jiwamu:\s*/i, '')
-      .replace(/\*\*/g, '')
-      .trim();
+    // 2. Memanggil API
+    const result = await client.models.generateContent({
+      model: "gemini-3-flash-preview", 
+      contents: contents,
+      config: {
+        temperature: 0.7,
+      }
+    });
+
+    // 3. Cara mengambil respons yang benar agar tidak UNDEFINED
+    // Di SDK baru, teks ada di result.text, tapi kita proteksi jika kosong
+    let aiResponse = "";
+    
+    if (result && result.text) {
+        aiResponse = result.text;
+    } else if (result.candidates && result.candidates[0].content.parts[0].text) {
+        aiResponse = result.candidates[0].content.parts[0].text;
+    } else {
+        // Jika masih undefined, kita log full result untuk debug
+        console.log("--- [FULL RESULT DEBUG] ---");
+        console.dir(result, { depth: null });
+        aiResponse = "Maaf, aku tidak bisa memproses pesan itu. Bisa coba bahasa lain? 💙";
+    }
+
+    console.log("--- [AI RESPONSE SUCCESS] ---");
+    console.log(aiResponse);
 
     res.json({
-      response: cleanResponse,
+      response: aiResponse,
       timestamp: new Date().toISOString()
     });
 
   } catch (error) {
-    console.error('Error generating AI response:', error);
+    console.error("\n--- [ERROR API] ---");
+    console.error("Message:", error.message);
+    if (error.details) console.dir(error.details, { depth: null });
 
-    // Fallback response if AI fails
-    const fallbackResponses = [
-      "Aku ngerti perasaan kamu... 💙 Ceritain lebih detail dong, aku di sini buat dengerin tanpa menghakimi. Ada apa yang lagi kamu rasain sekarang? 🙏",
-      "Terima kasih sudah mau sharing... 🤗 Aku hargai keberanian kamu buat buka hati. Mau cerita lebih lanjut? Aku siap mendengarkan. 💙✨",
-      "Aku di sini buat kamu ya... 🫂 Apa pun yang lagi kamu rasain, itu valid dan penting. Ceritain aja semuanya, aku gak akan judge. 💪🙏"
-    ];
-
-    res.json({
-      response: fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
-      timestamp: new Date().toISOString(),
-      fallback: true
+    res.status(500).json({
+      response: "Aduh, ada gangguan teknis di otakku. Coba lagi ya? 💙",
+      error: error.message
     });
   }
 });
-
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -523,6 +537,5 @@ app.get('/api/health', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`AI Chat API server running on port ${port}`);
-  console.log('Make sure to set GEMINI_API_KEY in your .env file');
+  console.log(`🚀 Server Jiwamu (SDK Baru) jalan di http://localhost:${port}`);
 });
