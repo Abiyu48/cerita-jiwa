@@ -9,7 +9,19 @@ const AIChat = () => {
   const [filter, setFilter] = useState('Semua');
   const [error, setError] = useState(null);
   const messagesEndRef = useRef(null);
+  const chatContainerRef = useRef(null);
   const [chatHistory, setChatHistory] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [shouldScroll, setShouldScroll] = useState(true);
+
+  // Get current user from localStorage
+  useEffect(() => {
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    if (user && user.id) {
+      setCurrentUser(user);
+      loadUserChatHistory(user.id);
+    }
+  }, []);
 
   const emotionFilters = [
     { label: 'Semua', icon: null, count: chatHistory.length },
@@ -20,13 +32,45 @@ const AIChat = () => {
     { label: '😠', icon: Angry, count: chatHistory.filter(r => r.emotion === '😠').length }
   ];
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  const scrollToBottom = (smooth = true) => {
+    if (shouldScroll && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: smooth ? 'smooth' : 'auto',
+        block: 'end'
+      });
+    }
   };
 
+  // Auto scroll ketika messages berubah
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Load chat history from backend
+  const loadUserChatHistory = async (userId) => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/chat-history/${userId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setChatHistory(data);
+      }
+    } catch (error) {
+      console.error('Error loading chat history:', error);
+    }
+  };
+
+  // Save chat history to backend
+  const saveChatHistory = async (userId, history) => {
+    try {
+      await fetch('http://localhost:3001/api/chat-history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, chatHistory: history })
+      });
+    } catch (error) {
+      console.error('Error saving chat history:', error);
+    }
+  };
 
   const detectEmotion = (message) => {
     const msg = message.toLowerCase();
@@ -49,7 +93,12 @@ const AIChat = () => {
       messages: []
     };
 
-    setChatHistory([newRoom, ...chatHistory]);
+    const updatedHistory = [newRoom, ...chatHistory];
+    setChatHistory(updatedHistory);
+    if (currentUser) {
+      saveChatHistory(currentUser.id, updatedHistory);
+    }
+    
     setSelectedRoom(newRoom.id);
     setMessages([{
       id: 1,
@@ -70,7 +119,7 @@ const AIChat = () => {
   };
 
   const updateChatHistory = (roomId, newMessages, lastUserMessage) => {
-    setChatHistory(prev => prev.map(room => {
+    const updatedHistory = chatHistory.map(room => {
       if (room.id === roomId) {
         const emotion = detectEmotion(lastUserMessage);
         return {
@@ -82,11 +131,19 @@ const AIChat = () => {
         };
       }
       return room;
-    }));
+    });
+    
+    setChatHistory(updatedHistory);
+    if (currentUser) {
+      saveChatHistory(currentUser.id, updatedHistory);
+    }
   };
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || !selectedRoom) return;
+    if (!newMessage.trim() || !selectedRoom || isTyping) return;
+
+    // Lock scroll position sementara
+    setShouldScroll(false);
 
     const userMessage = {
       id: Date.now(),
@@ -100,6 +157,13 @@ const AIChat = () => {
     
     const currentMessage = newMessage;
     setNewMessage('');
+    
+    // Scroll ke message user baru setelah render
+    setTimeout(() => {
+      setShouldScroll(true);
+      scrollToBottom(true);
+    }, 100);
+
     setIsTyping(true);
     setError(null);
 
@@ -119,6 +183,9 @@ const AIChat = () => {
       if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
 
+      // Delay untuk simulasi typing (1.5-2 detik)
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
       const aiResponse = {
         id: Date.now() + 1,
         text: data.response,
@@ -129,9 +196,13 @@ const AIChat = () => {
       const finalMessages = [...updatedMessages, aiResponse];
       setMessages(finalMessages);
       updateChatHistory(selectedRoom, finalMessages, currentMessage);
+      setIsTyping(false);
+
     } catch (error) {
       console.error('Error getting AI response:', error);
       setError('Gagal terhubung ke server. Pastikan server berjalan di http://localhost:3001');
+      
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       const aiResponse = {
         id: Date.now() + 1,
@@ -143,16 +214,25 @@ const AIChat = () => {
       const finalMessages = [...updatedMessages, aiResponse];
       setMessages(finalMessages);
       updateChatHistory(selectedRoom, finalMessages, currentMessage);
-    } finally {
       setIsTyping(false);
     }
   };
 
-  const deleteAllHistory = () => {
+  const deleteAllHistory = async () => {
     if (window.confirm('Apakah Anda yakin ingin menghapus semua riwayat?')) {
       setChatHistory([]);
       setSelectedRoom(null);
       setMessages([]);
+      
+      if (currentUser) {
+        try {
+          await fetch(`http://localhost:3001/api/chat-history/${currentUser.id}`, {
+            method: 'DELETE'
+          });
+        } catch (error) {
+          console.error('Error deleting chat history:', error);
+        }
+      }
     }
   };
 
@@ -296,7 +376,7 @@ const AIChat = () => {
                 </div>
 
                 {/* Messages */}
-                <div className="flex-1 p-6 overflow-y-auto space-y-4">
+                <div ref={chatContainerRef} className="flex-1 p-6 overflow-y-auto space-y-4">
                   {messages.map((message) => (
                     <div
                       key={message.id}
@@ -322,17 +402,19 @@ const AIChat = () => {
                     </div>
                   ))}
 
+                  {/* Typing Animation */}
                   {isTyping && (
                     <div className="flex justify-start">
-                      <div className="bg-gray-100 px-4 py-3 rounded-2xl">
-                        <div className="flex space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                      <div className="bg-gray-100 px-6 py-4 rounded-2xl">
+                        <div className="flex space-x-2">
+                          <div className="w-2.5 h-2.5 bg-gray-400 rounded-full animate-bounce"></div>
+                          <div className="w-2.5 h-2.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                          <div className="w-2.5 h-2.5 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
                         </div>
                       </div>
                     </div>
                   )}
+
                   <div ref={messagesEndRef} />
                 </div>
 
@@ -343,7 +425,12 @@ const AIChat = () => {
                       type="text"
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
-                      onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && sendMessage()}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey && !isTyping) {
+                          e.preventDefault();
+                          sendMessage();
+                        }
+                      }}
                       placeholder="Tulis pesan Anda di sini..."
                       className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300 focus:border-transparent"
                       disabled={isTyping}

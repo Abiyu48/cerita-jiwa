@@ -231,18 +231,18 @@ const GuestMode = () => {
       <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-emerald-200/30 to-cyan-200/30 rounded-full blur-3xl"></div>
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-purple-200/30 to-pink-200/30 rounded-full blur-3xl"></div>
 
-      <div className="container mx-auto px-4 pt-16 pb-8 relative z-10">
+      <div className="container mx-auto px-4 pt-28 md:pt-32 pb-8 relative z-10">
         {/* Header */}
-        <div className="text-center mb-8 animate-float">
+        <div className="text-center mb-12 animate-float">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-emerald-400 to-cyan-500 rounded-3xl mb-6 shadow-lg">
             <Eye className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-5xl md:text-6xl font-bold mb-4">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-4">
             <span className="bg-gradient-to-r from-emerald-600 to-cyan-600 bg-clip-text text-transparent">
               Mode Tamu
             </span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mt-8">
+          <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto mt-6">
             Eksplorasi fitur kesehatan mental kami tanpa perlu akun. Daftar untuk menyimpan progress Anda.
           </p>
         </div>
